@@ -7,6 +7,8 @@ const taskInput = document.querySelector('#task');
 loadEventListeners();
 
 function loadEventListeners() {
+    document.addEventListener('DOMContentLoaded', loadTasks);
+
     form.addEventListener('submit', addTask);
 
     taskList.addEventListener('click', removeTask);
@@ -16,14 +18,29 @@ function loadEventListeners() {
     filter.addEventListener('keyup', filterTasks);
 }
 
+function loadTasks() {
+    tasks = getTasks();
+    tasks.forEach(function(task){
+        addTaskElement(task);
+    });
+}
+
 function addTask(e) {
     if(taskInput.value === '') {
         alert('Add a task');
     }
 
+    addTaskElement(taskInput.value);
+    storeInLocalStorage(taskInput.value);
+    taskInput.value = '';
+
+    e.preventDefault();
+}
+
+function addTaskElement(value) {
     const li = document.createElement('li');
     li.className = 'collection-item';
-    li.appendChild(document.createTextNode(taskInput.value));
+    li.appendChild(document.createTextNode(value));
     
     const link = document.createElement('a');
     link.className = 'delete-item secondary-content';
@@ -31,9 +48,25 @@ function addTask(e) {
     li.appendChild(link);
 
     taskList.appendChild(li);
-    taskInput.value = '';
+}
 
-    e.preventDefault();
+function storeInLocalStorage(task) {
+    let tasks = getTasks();
+    
+    tasks.push(task);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+function getTasks() {
+    let tasks;
+    let localStorageTasks = localStorage.getItem('tasks');
+
+    if (localStorageTasks === null)
+        tasks = [];
+    else
+        tasks = JSON.parse(localStorageTasks);
+
+    return tasks;
 }
 
 function removeTask(e) {
@@ -41,6 +74,14 @@ function removeTask(e) {
     if(parentElement.classList.contains('delete-item')) {
         parentElement.parentElement.remove();
     }
+
+    tasks = getTasks();
+    tasks.forEach(function(taskItem, index) {
+        if(e.target.parentElement.parentElement.textContent === taskItem)
+            tasks.splice(index, 1);
+    })
+
+    localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
 function clearTasks() {
@@ -49,6 +90,8 @@ function clearTasks() {
     while(taskList.firstChild) {
         taskList.removeChild(taskList.firstChild);
     }
+
+    localStorage.clear();
 }
 
 function filterTasks(e) {
